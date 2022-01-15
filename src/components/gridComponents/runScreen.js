@@ -1,17 +1,7 @@
 import React, {useCallback, useState} from 'react'
-import styled, {css} from 'styled-components'
+import styled, { css } from 'styled-components'
+import LineElement from './lineElement'
 
-// const RunScreenElement = styled.div`
-//     position: relative;
-//     // width: 50%;
-//     width: 1000px;
-//     height: 500px; 
-//     border: 1px solid black;
-//     background-color: #FFF;
-//     background-image: linear-gradient(0deg, #444 25%, transparent 25%, transparent 75%, #444 75%, #FFF), linear-gradient(90deg, #444 25%, transparent 25%, transparent 75%, #444 75%, #444);
-//     background-position: 0 0, 25px 25px;
-//     background-size: 50px 50px;
-// `
 const RunScreenElement = styled.div`
     display: flex;
     width: 1200px;
@@ -24,10 +14,6 @@ const Run = styled.div`
     gap: 10px 10px;
     border: 1px solid black;
     margin: auto;
-    ${(props) => css`
-        grid-template-rows: ${props.lines.rows.join('px ')}px;
-        grid-template-columns: ${props.lines.columns.join('px ')}px;
-    `}
 `
 const Item = styled.div`
     position: absolute;
@@ -38,56 +24,17 @@ const Item = styled.div`
     top:${(props) => props.location.top}px;
     left:${(props) => props.location.left}px;
 `
-const ColumnLine = styled.div`
-    position: relative;
-    left: ${(props) => props.location}px;
-    // left: 10px;
-    width: 0px;
-    height: 500px;
+const AddLineButton = styled.button`
+    height: 20px;
+    width: 40px;
 `
-
-const Line = styled.div`
-    position: relative;
-    left: 17px;
-    width: 0px;
-    height: 500px;
-    border: 1px solid black;
-`
-const RowLine = styled.div`
-    position: absolute;
-    top: 10px;
-    width: 1000px;
-    height: 0px;
-    border: 1px solid black;
-`
-const ColumnTriangle = styled.div`
-    width: 0px;
-    height: 0px;
-    border-bottom: 36px solid #666666;
-    border-left: 18px solid transparent;
-    border-right: 18px solid transparent;
-`
-const RowTriangle = styled.div`
-    width: 0px;
-    height: 0px;
-    border-bottom: 360px solid #666666;
-    border-left: 180px solid transparent;
-    border-right: 180px solid transparent;
-    transform: rotate( 45deg );
-`
-
-
 const RunScreen = () => {
     const data = {top:0, left:0};
     const [itemRed, setItemRed] = useState({...data});
     const [clickLoc, setClickLoc] = useState({...data}); 
-    const [lines, setLines] = useState({
-        rows:[500],
-        columns:[30]
-    })
+    const [columnLines, setColumnLines] = useState([300, 500]);
+    const [rowLines, setRowLines] = useState([100,200]);
     const DragEnter = useCallback((e) => {
-        console.log("y", e.pageY, itemRed['top']);
-        console.log("x", e.pageX, itemRed['left']);
         setClickLoc({
             ...clickLoc,
             top:e.pageY - itemRed['top'],
@@ -103,33 +50,27 @@ const RunScreen = () => {
         })
       })
 
-    const MakeLines = useCallback(()=>{
-        const rowsLine = []
-        const columnsLine = []
-        // lines[rows].map((line)=>{
-        //     // return <line></>
-        // })
-        // return (
-        //     <div></div>
-        // )
-    },[lines]);
-    const MoveColumnLine = useCallback((e)=>{
-        console.log(e.clientX, e.screenX)
-        setLines({
-            ...lines,
-            
-        })
-    });
-    const MouseDown = useCallback(e=>{
-        const MoveEvent = (e)=>{
-            const mouseX = e.clientX-120;
-            console.log(mouseX)
-            if(mouseX >= -20 && mouseX <= 980){
-                setLines({
-                    ...lines,
-                    columns:[mouseX]
-                })
+
+    const MouseDown = useCallback((e,index,direction)=>{
+        const MoveEvent = direction=="column"?
+        (e)=>{
+            const mouseX = e.clientX-10;
+            if(mouseX >= 80 && mouseX <= 1080){
+                columnLines[index] = mouseX
+                setColumnLines([
+                    ...columnLines,
+                ])
             }
+        }:
+        (e)=>{
+            const mouseY = e.clientY-10;
+            if(mouseY >= 80 && mouseY <= 580){
+                rowLines[index] = mouseY
+                setRowLines([
+                    ...rowLines,
+                ])
+            }
+
         };
         document.addEventListener("mousemove", MoveEvent);
         document.addEventListener("mouseup", e=>{
@@ -145,27 +86,29 @@ const RunScreen = () => {
                 onDragEnter={DragEnter}
                 onDragEnd={DragEnd}
             ></Item>
-            {/* <div class="one">One</div>
-            <div class="two">Two</div>
-            <div class="three">Three</div>
-            <div class="four">Four</div>
-            <div class="five">Five</div>
-            <div class="six">Six</div> */}
-
-
-
-            {MakeLines}
-            <Run lines={lines}>
-                <ColumnLine location={lines['columns'][0]}>
-                    <Line
-                        direction="Column"
-                    ></Line>
-                    <ColumnTriangle
-                        onMouseDown = {MouseDown}
-                    ></ColumnTriangle>
-                </ColumnLine>
-                    <RowLine></RowLine>
+            <Run>
+                {columnLines.map((loc, index) => {
+                    return (
+                        <LineElement
+                            direction="column"
+                            location={loc}
+                            MouseDown={(e)=>MouseDown(e, index, "column")}
+                        />    
+                    )
+                })}
+                {rowLines.map((loc, index) => {
+                    return (
+                        <LineElement
+                            direction="row"
+                            location={loc}
+                            MouseDown={(e)=>MouseDown(e, index, 'row')}
+                        />
+                    )
+                })
+                }
             </Run>
+            <AddLineButton>행 추가</AddLineButton>
+            <AddLineButton>열 추가</AddLineButton>
         </RunScreenElement>
     )
 
