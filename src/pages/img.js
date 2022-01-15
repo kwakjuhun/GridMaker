@@ -65,7 +65,7 @@ const index = () => {
     return(
         <IndexComponent>
             <TestComponent src={Image} location={ScrollY >= 10 ? ScrollY/10-1:0}></TestComponent>
-            <Text1 location={ScrollY}>안희건 바보</Text1>
+            <Text1 location={ScrollY}>Test</Text1>
         </IndexComponent>
     )
 };
