@@ -21,42 +21,93 @@ const Item = styled.div`
     width: 100px;
     height: 100px;
     border-radius: 20px;
-    top:${(props) => props.location.top}px;
-    left:${(props) => props.location.left}px;
+    opacity: ${(props) => props.info.onMouse ? 0.5:1};
+    ${(props) => props.info.inBox && css`
+        transform: translateX(${(props) => props.info.left}px)
+            translateY(${(props) => props.info.top}px);
+            // scaleX(${(props) => (props.info.right-props.info.left)/100})
+            // scaleY(${(props) => (props.info.bottom-props.info.top)/100});
+    `}
 `
 const AddLineButton = styled.button`
     height: 20px;
     width: 40px;
 `
 const RunScreen = () => {
-    const data = {top:0, left:0};
+    const data = {top:0, left:0, bottom:0, right:0, onMouse:false, inBox:false};
     const [itemRed, setItemRed] = useState({...data});
-    const [clickLoc, setClickLoc] = useState({...data}); 
     const [columnLines, setColumnLines] = useState([300, 500]);
     const [rowLines, setRowLines] = useState([100,200]);
-    const DragEnter = useCallback((e) => {
-        setClickLoc({
-            ...clickLoc,
-            top:e.pageY - itemRed['top'],
-            left:e.pageX - itemRed['left']
-        })
-      }, [itemRed]);
-      const DragEnd = useCallback((e)=>{
-        // e.stopPropagation();
-        setItemRed({
-            ...itemRed,
-            top:parseInt((e.pageY-clickLoc['top']+50) / 100) * 100,
-            left:parseInt((e.pageX-clickLoc['left']+50) / 100) * 100
-        })
-      })
 
+    const ItemMouseDown = useCallback((e) => {
+        console.log("event start")
+        const MoveEvent = e => {
+            itemRed['onMouse'] = true;
+            const mouseX = e.clientX;
+            const mouseY = e.clientY;
+            console.log(mouseX,mouseY)
+            if(mouseX >= 80 && mouseX <= 1080 && mouseY >= 80 && mouseY <= 580){
+                itemRed['inBox'] = true;
+                let left = 40
+                let right = 40
+                let top = 80
+                let bottom = 80
+                column: {
+                    for (var i of columnLines){
+                        left = right
+                        right = i
+                        if(mouseX >= left && mouseX <= right){
+                            break column;
+                        }
+                    }
+                    left = right
+                    right = 1080
+                }
+                row: {
+                    for (var i of rowLines){
+                        top = bottom
+                        bottom = i
+                        if(mouseY >= top && mouseY <= bottom){
+                            break row;
+                        }
+                    }
+                    top = bottom
+                    bottom = 580
+                }
+                itemRed['left'] = left+20;
+                itemRed['top'] = top+20;
+                itemRed['bottom'] = bottom;
+                itemRed['right'] = right;
+                console.log(itemRed)
+                setItemRed({
+                    ...itemRed
+                })
+            }else{
+                itemRed['inBox'] = false;
+                itemRed['left'] = 0;
+                itemRed['top'] = 0;
+                setItemRed({
+                    ...itemRed
+                })
 
-    const MouseDown = useCallback((e,index,direction)=>{
+            }
+        };
+        document.addEventListener("mousemove", MoveEvent);
+        document.addEventListener("mouseup", e => {
+            itemRed['onMouse'] = false
+            setItemRed({
+                ...itemRed
+            })
+            document.removeEventListener('mousemove', MoveEvent);
+        })
+    });
+    const LineMouseDown = useCallback((e,index,direction)=>{
         const MoveEvent = direction=="column"?
         (e)=>{
             const mouseX = e.clientX-10;
             if(mouseX >= 80 && mouseX <= 1080){
                 columnLines[index] = mouseX
+                columnLines.sort();
                 setColumnLines([
                     ...columnLines,
                 ])
@@ -66,6 +117,7 @@ const RunScreen = () => {
             const mouseY = e.clientY-10;
             if(mouseY >= 80 && mouseY <= 580){
                 rowLines[index] = mouseY
+                rowLines.sort();
                 setRowLines([
                     ...rowLines,
                 ])
@@ -73,7 +125,7 @@ const RunScreen = () => {
 
         };
         document.addEventListener("mousemove", MoveEvent);
-        document.addEventListener("mouseup", e=>{
+        document.addEventListener("mouseup", e => {
             document.removeEventListener('mousemove', MoveEvent);
         })
     })
@@ -81,10 +133,8 @@ const RunScreen = () => {
     return(
         <RunScreenElement>
             <Item
-                location = {itemRed}
-                draggable="true"
-                onDragEnter={DragEnter}
-                onDragEnd={DragEnd}
+                info = {itemRed}
+                onMouseDown = {(e) => ItemMouseDown(e,0)}
             ></Item>
             <Run>
                 {columnLines.map((loc, index) => {
@@ -92,7 +142,7 @@ const RunScreen = () => {
                         <LineElement
                             direction="column"
                             location={loc}
-                            MouseDown={(e)=>MouseDown(e, index, "column")}
+                            MouseDown={(e)=>LineMouseDown(e, index, "column")}
                         />    
                     )
                 })}
@@ -101,7 +151,7 @@ const RunScreen = () => {
                         <LineElement
                             direction="row"
                             location={loc}
-                            MouseDown={(e)=>MouseDown(e, index, 'row')}
+                            MouseDown={(e)=>LineMouseDown(e, index, 'row')}
                         />
                     )
                 })
