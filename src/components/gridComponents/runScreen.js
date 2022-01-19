@@ -1,4 +1,4 @@
-import React, {useCallback, useState} from 'react'
+import React, {useCallback, useEffect, useState} from 'react'
 import styled, { css } from 'styled-components'
 import LineElement from './lineElement'
 
@@ -34,13 +34,30 @@ const AddLineButton = styled.button`
     width: 40px;
 `
 const RunScreen = () => {
-    const data = {top:0, left:0, bottom:0, right:0, onMouse:false, inBox:false};
+    const data = { loc:[-1,-1], top:300, left:0, bottom:0, right:0, onMouse:false, inBox:false};
     const [itemRed, setItemRed] = useState({...data});
     const [columnLines, setColumnLines] = useState([300, 500]);
     const [rowLines, setRowLines] = useState([100,200]);
+    useEffect(()=>{
+        const [y, x] = itemRed['loc'];
+        if(y != -1 && x != -1){
+            if(y == 0)
+                itemRed['top'] = 100;
+            else
+                itemRed['top'] = rowLines[y-1]+ 20;
+            if(x == 0)
+                itemRed['left'] = 60;
+            else
+                itemRed['left'] = columnLines[x-1] + 20;
+
+            setItemRed({
+                ...itemRed,
+            })
+            // console.log(itemRed)
+        }
+    },[columnLines, rowLines])
 
     const ItemMouseDown = useCallback((e) => {
-        console.log("event start")
         const MoveEvent = e => {
             itemRed['onMouse'] = true;
             const mouseX = e.clientX;
@@ -52,45 +69,50 @@ const RunScreen = () => {
                 let right = 40
                 let top = 80
                 let bottom = 80
+                let y = -1
+                let x = -1
                 column: {
                     for (var i of columnLines){
                         left = right
                         right = i
+                        x += 1
                         if(mouseX >= left && mouseX <= right){
                             break column;
                         }
                     }
                     left = right
                     right = 1080
+                    x += 1
                 }
                 row: {
                     for (var i of rowLines){
                         top = bottom
                         bottom = i
+                        y += 1
                         if(mouseY >= top && mouseY <= bottom){
                             break row;
                         }
                     }
                     top = bottom
                     bottom = 580
+                    y+= 1
                 }
                 itemRed['left'] = left+20;
                 itemRed['top'] = top+20;
                 itemRed['bottom'] = bottom;
                 itemRed['right'] = right;
-                console.log(itemRed)
-                setItemRed({
-                    ...itemRed
-                })
-            }else{
+                itemRed['loc'] = [y, x];
+            }else{ 
+                itemRed['loc'] = [-1, -1];
                 itemRed['inBox'] = false;
                 itemRed['left'] = 0;
                 itemRed['top'] = 0;
-                setItemRed({
-                    ...itemRed
-                })
-
             }
+            setItemRed({
+                ...itemRed
+            })
+
+            
         };
         document.addEventListener("mousemove", MoveEvent);
         document.addEventListener("mouseup", e => {
@@ -99,15 +121,16 @@ const RunScreen = () => {
                 ...itemRed
             })
             document.removeEventListener('mousemove', MoveEvent);
-        })
+        },{once:true})
     });
+
     const LineMouseDown = useCallback((e,index,direction)=>{
         const MoveEvent = direction=="column"?
         (e)=>{
             const mouseX = e.clientX-10;
             if(mouseX >= 80 && mouseX <= 1080){
-                columnLines[index] = mouseX
-                columnLines.sort();
+                columnLines[index] = mouseX;
+                columnLines.sort();  // 이거때매 밀리는거 같은데 개선해야할듯
                 setColumnLines([
                     ...columnLines,
                 ])
@@ -116,7 +139,7 @@ const RunScreen = () => {
         (e)=>{
             const mouseY = e.clientY-10;
             if(mouseY >= 80 && mouseY <= 580){
-                rowLines[index] = mouseY
+                rowLines[index] = mouseY;
                 rowLines.sort();
                 setRowLines([
                     ...rowLines,
@@ -125,15 +148,15 @@ const RunScreen = () => {
 
         };
         document.addEventListener("mousemove", MoveEvent);
-        document.addEventListener("mouseup", e => {
+        document.addEventListener("mouseup", (e) => {
             document.removeEventListener('mousemove', MoveEvent);
-        })
+        }, { once:true })
     })
-
+    console.log(itemRed)
     return(
         <RunScreenElement>
             <Item
-                info = {itemRed}
+                info = {console.log(itemRed) || itemRed}
                 onMouseDown = {(e) => ItemMouseDown(e,0)}
             ></Item>
             <Run>
