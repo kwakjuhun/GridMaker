@@ -24,9 +24,10 @@ const Item = styled.div`
     opacity: ${(props) => props.info.onMouse ? 0.5:1};
     ${(props) => props.info.inBox && css`
         transform: translateX(${(props) => props.info.left}px)
-            translateY(${(props) => props.info.top}px);
-            // scaleX(${(props) => (props.info.right-props.info.left)/100})
-            // scaleY(${(props) => (props.info.bottom-props.info.top)/100});
+            translateY(${(props) => props.info.top}px)
+            scaleX(${(props) => (props.info.right-props.info.left)/100})
+            scaleY(${(props) => (props.info.bottom-props.info.top)/100});
+        transform-origin: 0% 0%;
     `}
 `
 const AddLineButton = styled.button`
@@ -40,20 +41,30 @@ const RunScreen = () => {
     const [rowLines, setRowLines] = useState([100,200]);
     useEffect(()=>{
         const [y, x] = itemRed['loc'];
+        const cS = columnLines.length;
+        const rS = rowLines.length;
         if(y != -1 && x != -1){
-            if(y == 0)
+            if(y == 0){
                 itemRed['top'] = 100;
-            else
+            }else{
                 itemRed['top'] = rowLines[y-1]+ 20;
-            if(x == 0)
-                itemRed['left'] = 60;
+            }
+            if(y == rS)
+                itemRed['bottom'] = 600;
             else
+                itemRed['bottom'] = rowLines[y]+ 20;
+            if(x == 0){
+                itemRed['left'] = 60;
+            }else{
                 itemRed['left'] = columnLines[x-1] + 20;
-
+            }
+            if(x == cS)
+                itemRed['right'] = 1060;
+            else
+                itemRed['right'] = columnLines[x] + 20;
             setItemRed({
                 ...itemRed,
             })
-            // console.log(itemRed)
         }
     },[columnLines, rowLines])
 
@@ -62,7 +73,6 @@ const RunScreen = () => {
             itemRed['onMouse'] = true;
             const mouseX = e.clientX;
             const mouseY = e.clientY;
-            console.log(mouseX,mouseY)
             if(mouseX >= 80 && mouseX <= 1080 && mouseY >= 80 && mouseY <= 580){
                 itemRed['inBox'] = true;
                 let left = 40
@@ -81,7 +91,7 @@ const RunScreen = () => {
                         }
                     }
                     left = right
-                    right = 1080
+                    right = 1040
                     x += 1
                 }
                 row: {
@@ -99,8 +109,8 @@ const RunScreen = () => {
                 }
                 itemRed['left'] = left+20;
                 itemRed['top'] = top+20;
-                itemRed['bottom'] = bottom;
-                itemRed['right'] = right;
+                itemRed['bottom'] = bottom+20;
+                itemRed['right'] = right+18;
                 itemRed['loc'] = [y, x];
             }else{ 
                 itemRed['loc'] = [-1, -1];
@@ -152,11 +162,10 @@ const RunScreen = () => {
             document.removeEventListener('mousemove', MoveEvent);
         }, { once:true })
     })
-    console.log(itemRed)
     return(
         <RunScreenElement>
             <Item
-                info = {console.log(itemRed) || itemRed}
+                info = {itemRed}
                 onMouseDown = {(e) => ItemMouseDown(e,0)}
             ></Item>
             <Run>
